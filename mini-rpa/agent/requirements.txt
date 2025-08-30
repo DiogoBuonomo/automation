@@ -1,0 +1,8 @@
+flask
+requests
+python-dotenv
+cryptography
+uvicorn
+keyring
+pydantic
+fastapi

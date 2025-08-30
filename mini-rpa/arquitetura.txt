@@ -1,0 +1,13 @@
+mini-rpa/
+│
+├── orchestrator/        ← Projeto do Orquestrador
+│   ├── orchestrator.py
+│   ├── send_job.py      ← Cliente para testar
+│   ├── requirements.txt
+│   └── .env             ← chave fernet e configs
+│
+└── agent/               ← Projeto do Agente (Bot)
+    ├── agent.py
+    ├── automation_example.py
+    ├── requirements.txt
+    └── .env
