@@ -3,3 +3,9 @@ mini-rpa/job_test/.venv/
 mini-rpa/orchestrator/__pycache__/
 mini-rpa/orchestrator/.venv/
 qive_api/.venv/
+qive_api/log/
+qive_api/__pycache__/
+qive_api/danfe_pdf/
+qive_api/danfe_xml/
+qive_api/danfse_pdf/
+qive_api/danfse_xml/
