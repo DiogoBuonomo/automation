@@ -1,0 +1,18 @@
+Chamando diretamente a API: (diretamente de uma outra plataforma como tableu ou power bi)
+payload = {'Token': '',
+    'ParametrosEntrada': '{"DataInicio": "", "DataFim":"", "Limite": 1000, "Pagina":0, "Workflow":"", "Tarefa":"", "StatusId":""}',
+}
+#todos os parametrosEntrada são opcionais
+relatorio = 'relatorio_atividade'
+# funciona para: 
+#    relatorio_atividade
+#    relatorio_auditoria
+#    relatorio_maquina
+#    relatorio_sistema
+#    relatorio_execucao
+#    relatorio_andamento
+#    relatorio_agente_ia
+#    relatorio_botstore
+
+response = requests.request("POST", f"api.srscloud.com.br/relatorio/{relatorio}", data=entrada)
+print(response.text)

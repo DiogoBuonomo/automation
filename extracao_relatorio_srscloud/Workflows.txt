@@ -1,0 +1,8 @@
+[{"WorkflowId":"","NomeWorkflow":"GeraRelatorio","AliasWorkflow":"relatorios","DescricaoWorkflow":"Workflow de geracao de relatorios periodicos","CorWorkflow":"#ff9742","StatusWorkflow":1,"Expurgo":15,"Timeout":5,
+"Tarefa":[
+    {"TarefaId":"","NomeTarefa":"Gera Relat\u00f3rio de Atividade","AliasTarefa":"atividade","SlaTarefa":5,"SlaUnidadeId":"1440","FteTarefa":4,"FteUnidadeId":"60","TipoTarefaId":"11","ApiTarefa":"ExtraiRelatorioAtividade.py","DescricaoTarefa":"Extrai o relatorio de atividades do mes aterior","StatusTarefa":1,"TratamentoErro":0,"Cor":"#ff6418",
+    "TarefaParametro":[
+        {"NomeParametro":"DataFim","TipoParametroId":"2","TipoDadoId":"7","ValorParametro":"","Obrigatorio":1,"Regex":"","Lista":"","AlteradoPorApi":0,"ArquivoParametroNome":"","DescricaoParametro":""},
+        {"NomeParametro":"DataInicio","TipoParametroId":"2","TipoDadoId":"7","ValorParametro":"","Obrigatorio":1,"Regex":"","Lista":"","AlteradoPorApi":0,"ArquivoParametroNome":"","DescricaoParametro":""},
+        {"NomeParametro":"AliasWorkflow","TipoParametroId":"2","TipoDadoId":"1","ValorParametro":"","Obrigatorio":0,"Regex":"","Lista":"","AlteradoPorApi":0,"ArquivoParametroNome":"","DescricaoParametro":"Referencia opcional para extrair o relatorio de um determinado Workflow"},
+    ]}]}]
