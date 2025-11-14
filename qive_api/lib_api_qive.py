@@ -407,7 +407,7 @@ class QiveAPI:
         return None
 
 
-    def baixar_nfe_pdf(self, access_key, nome_arquivo=None, pasta="./danfe"):
+    def baixar_nfe_pdf(self, access_key, nome_arquivo=None, pasta="./danfe_pdf"):
         """
         Busca o DANFe (PDF) por access_key, decodifica base64 e salva em disco.
         Cria a pasta se não existir.
@@ -416,7 +416,7 @@ class QiveAPI:
             access_key (str): chave de acesso da NFe (44 dígitos)
             nome_arquivo (str|None): nome do arquivo (ex: "meu_arquivo.pdf"). 
                                     Se None, será usado "DANFE_<access_key>.pdf".
-            pasta (str): diretório onde salvar o PDF (ex: "./danfes" ou "C:/meus/arquivos").
+            pasta (str): diretório onde salvar o PDF.
 
         Retorna:
             str|None: caminho completo do arquivo salvo ou None em caso de erro.
@@ -550,7 +550,7 @@ class QiveAPI:
         return None
 
 
-    def baixar_nfse_pdf(self, id_nfse, nome_arquivo=None, pasta="./danfse"):
+    def baixar_nfse_pdf(self, id_nfse, nome_arquivo=None, pasta="./danfse_pdf"):
         """
         Baixa o DANFSe (PDF) de uma NFS-e via API Qive/Arquivei
         e salva o arquivo PDF decodificado a partir de base64.
@@ -558,7 +558,7 @@ class QiveAPI:
         Args:
             id_nfse (str): ID da NFS-e
             nome_arquivo (str|None): Nome do arquivo PDF (opcional)
-            pasta (str): Diretório onde salvar (padrão: ./pdfs)
+            pasta (str): Diretório onde salvar o PDF (padrão: ./danfse_pdf)
 
         Returns:
             str|None: Caminho do arquivo PDF salvo ou None em caso de erro
@@ -675,3 +675,172 @@ class QiveAPI:
 
         return None
 
+
+    def processar_nfse_por_numero(
+        self,
+        numero_nota,
+        cnpj,
+        data_emissao,
+        data_fim=None,
+        nome_arquivo_pdf=None,
+        nome_arquivo_xml=None,
+        pasta_pdf="./danfse_pdf",
+        pasta_xml="./danfse_xml"
+    ):
+        """
+        Consulta se uma NFSe está cancelada e, se estiver ativa, baixa PDF e XML.
+
+        Args:
+            numero_nota (str): Número da NFSe
+            cnpj (str): CNPJ da empresa
+            data_emissao (str): Data de emissão no formato YYYY-MM-DD
+            nome_arquivo_pdf (str, opcional): Nome do arquivo PDF a ser salvo.
+            nome_arquivo_xml (str, opcional): Nome do arquivo XML a ser salvo.
+            pasta_pdf (str, opcional): Diretório para salvar o PDF.
+            pasta_xml (str, opcional): Diretório para salvar o XML.
+        """
+        from datetime import datetime
+
+        try:
+            if not data_fim:
+                data_fim = datetime.now().strftime("%Y-%m-%d")
+            
+            logging.info("=" * 80)
+            logging.info(f"PROCESSANDO NFSe NÚMERO: {numero_nota}")
+            logging.info("=" * 80)
+
+            # 1️⃣ Buscar nota pelo número
+            nota_especifica = self.buscar_nfse_nota_por_numero(
+                numero_nota=numero_nota,
+                cnpj=cnpj,
+                created_from=data_emissao,
+                created_to=data_fim,
+                tipo="received"
+            )
+
+            if not nota_especifica:
+                logging.warning("NFSe não encontrada.")
+                return None
+
+            self.exibir_nota(nota_especifica)
+            id_nfse = nota_especifica.get("id_arquivei")
+
+            # Pequeno delay para não sobrecarregar a API
+            time.sleep(0.3)
+
+            # 2️⃣ Verificar se está cancelada
+            notas_canceladas = self.buscar_nfse_cancelada(
+                cnpj=cnpj, 
+                id_notas=[id_nfse], 
+                limit=50
+            )
+
+            if notas_canceladas:
+                logging.info(f"NFSe {numero_nota} está CANCELADA.")
+                return {"status": "CANCELADA", "id_nfse": id_nfse}
+
+            # 3️⃣ Se não estiver cancelada, baixar PDF e XML
+            logging.info(f"NFSe {numero_nota} ATIVA. Baixando arquivos...")
+
+            if not nome_arquivo_pdf:
+                nome_arquivo_pdf = f"NFS-e_{numero_nota}.pdf"
+            if not nome_arquivo_xml:
+                nome_arquivo_xml = f"NFS-e_{numero_nota}.xml"
+
+            # Pequeno delay para não sobrecarregar a API
+            time.sleep(0.3)
+
+            caminho_pdf = self.baixar_nfse_pdf(
+                id_nfse=id_nfse, nome_arquivo=nome_arquivo_pdf, pasta=pasta_pdf
+            )
+
+            # Pequeno delay para não sobrecarregar a API
+            time.sleep(0.3)
+            caminho_xml = self.baixar_nfse_xml(
+                id_nfse=id_nfse, nome_arquivo=nome_arquivo_xml, pasta=pasta_xml
+            )
+
+            resultado = {
+                "status": "ATIVA",
+                "id_nfse": id_nfse,
+                "pdf": caminho_pdf,
+                "xml": caminho_xml,
+            }
+
+            logging.info(f"Arquivos baixados com sucesso: {resultado}")
+            return resultado
+
+        except Exception as e:
+            logging.error(f"Erro ao processar NFSe: {e}")
+            return None
+
+
+    def processar_nfe_por_chave(
+        self,
+        access_key,
+        nome_arquivo_pdf=None,
+        nome_arquivo_xml=None,
+        pasta_pdf="./danfe_pdf",
+        pasta_xml="./danfe_xml"
+    ):
+        """
+        Consulta se uma NFe está cancelada e, se estiver ativa, baixa PDF e XML.
+
+        Args:
+            access_key (str): Chave de acesso da NFe
+            nome_arquivo_pdf (str, opcional): Nome do arquivo PDF a ser salvo.
+            nome_arquivo_xml (str, opcional): Nome do arquivo XML a ser salvo.
+            pasta_pdf (str, opcional): Diretório para salvar o PDF.
+            pasta_xml (str, opcional): Diretório para salvar o XML.
+        """
+        try:
+            logging.info("=" * 80)
+            logging.info(f"PROCESSANDO NFe CHAVE: {access_key}")
+            logging.info("=" * 80)
+
+            # 1️⃣ Verificar cancelamento
+            notas_canceladas = self.buscar_nfe_cancelada(access_key=[access_key])
+
+            if notas_canceladas:
+                logging.info(f"NFe {access_key} está CANCELADA.")
+                return {"status": "CANCELADA", "access_key": access_key}
+
+            # 2️⃣ Se não estiver cancelada, baixar DANFE (PDF) e XML
+            logging.info(f"NFe {access_key} ATIVA. Baixando arquivos...")
+
+            if not nome_arquivo_pdf:
+                nome_arquivo_pdf = f"NFe_{access_key}.pdf"
+            if not nome_arquivo_xml:
+                nome_arquivo_xml = f"NFe_{access_key}.xml"
+
+            # Pequeno delay para não sobrecarregar a API
+            time.sleep(0.3)
+            
+            caminho_pdf = self.baixar_nfe_pdf(
+                access_key=access_key, 
+                nome_arquivo=nome_arquivo_pdf, 
+                pasta=pasta_pdf
+            )
+
+            # Pequeno delay para não sobrecarregar a API
+            time.sleep(0.3)
+            
+            caminho_xml = self.baixar_nfe_xml(
+                access_key=access_key, 
+                nome_arquivo=nome_arquivo_xml, 
+                pasta=pasta_xml
+            )
+
+            resultado = {
+                "status": "ATIVA",
+                "access_key": access_key,
+                "pdf": caminho_pdf,
+                "xml": caminho_xml,
+            }
+
+            logging.info(f"Arquivos baixados com sucesso: {resultado}")
+            return resultado
+
+        except Exception as e:
+            logging.error(f"Erro ao processar NFe: {e}")
+            return None
